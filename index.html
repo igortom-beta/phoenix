@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lojzovy Paseky | Projekt Phoenix</title>
+    <title>Lojzovy Paseky | Medical & Family Resort</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -17,10 +17,8 @@
                         url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center; min-height: 100vh;
         }
-        .glass-nav { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); }
-        .chat-window { background: #111; border-radius: 2rem; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 10px; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .chat-window { background: #0a0a0a; border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 2rem; }
     </style>
 </head>
 <body>
@@ -30,107 +28,86 @@
         const { useState, useEffect, useRef } = React;
 
         function App() {
-            const [isOpen, setIsOpen] = useState(true); // Podle obrázku necháme otevřený
-            const [input, setInput] = useState('');
-            const [loading, setLoading] = useState(false);
+            const [lang, setLang] = useState('CZ');
+            const [isOpen, setIsOpen] = useState(true);
             const [messages, setMessages] = useState([
-                { r: 'ai', t: 'Dobrý den! 👋 Jsem asistent pro Lojzovy Paseky. Jak vám mohu pomoci s vaší rezervací?' }
+                { r: 'ai', t: 'Vítejte, pane doktore. Jsem Phoenix. Připravil jsem pro vás přehled termínů. Jak vám mohu pomoci?' }
             ]);
-            const scrollRef = useRef(null);
 
-            const send = async (e) => {
-                if(e) e.preventDefault();
-                if(!input.trim() || loading) return;
-                const userMsg = input;
-                setMessages(prev => [...prev, { r: 'u', t: userMsg }]);
-                setInput('');
-                setLoading(true);
+            const t = {
+                CZ: { title: "Lojzovy Paseky", sub: "Váš druhý domov u Lipna", res: "Rezervace", gal: "Galerie" },
+                EN: { title: "Lojzovy Paseky", sub: "Your second home at Lipno", res: "Booking", gal: "Gallery" },
+                DE: { title: "Lojzovy Paseky", sub: "Ihr zweites Zuhause am Lipno", res: "Buchung", gal: "Galerie" }
+            };
 
-                try {
-                    const res = await fetch('/api/chat', { 
-                        method: 'POST', 
-                        body: JSON.stringify({ message: userMsg }) 
-                    });
-                    const data = await res.json();
-                    setMessages(prev => [...prev, { r: 'ai', t: data.text }]);
-                } catch (e) {
-                    setMessages(prev => [...prev, { r: 'ai', t: 'Omlouvám se, spojení s AI Phoenix selhalo.' }]);
-                }
-                setLoading(false);
+            const selectDate = (day) => {
+                setIsOpen(true);
+                const responses = {
+                    CZ: `Termín ${day}. vypadá skvěle. Mám prověřit dostupnost bungalovu?`,
+                    EN: `Date ${day} looks great. Shall I check bungalow availability?`,
+                    DE: `Der ${day}. sieht gut aus. Soll ich die Verfügbarkeit prüfen?`
+                };
+                setMessages(prev => [...prev, { r: 'u', t: `Mám zájem o ${day}.` }, { r: 'ai', t: responses[lang] }]);
             };
 
             return (
                 <div className="relative">
-                    {/* NAVIGACE */}
-                    <nav className="fixed top-0 w-full glass-nav z-50 px-8 py-4 flex justify-between items-center text-white">
-                        <div className="font-bold text-xl tracking-tighter uppercase">Lojzovy Paseky</div>
-                        <div className="hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest opacity-70">
-                            <a href="#">O projektu</a><a href="#galerie">Apartmány</a><a href="#">Lokalita</a><a href="#">Kontakt</a>
+                    {/* JAZYKOVÝ PŘEPÍNAČ */}
+                    <nav className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center glass">
+                        <div className="font-bold text-xl tracking-tighter uppercase text-[#22c55e]">Phoenix Resort</div>
+                        <div className="flex gap-4 text-[10px] font-bold">
+                            {['CZ', 'EN', 'DE'].map(l => (
+                                <button key={l} onClick={() => setLang(l)} className={`px-2 py-1 ${lang === l ? 'text-[#22c55e]' : 'opacity-50'}`}>{l}</button>
+                            ))}
                         </div>
-                        <button className="bg-[#22c55e] px-6 py-2 rounded-full text-[10px] font-bold uppercase hover:bg-[#1da850]">Rezervovat</button>
                     </nav>
 
-                    {/* HERO - PŘESNĚ DLE TVÉHO OBRÁZKU */}
                     <header className="hero-bg flex flex-col items-center justify-center text-center px-4">
-                        <span className="text-[#22c55e] font-bold tracking-[0.4em] text-[10px] mb-6 uppercase">Váš druhý domov v srdci Šumavy</span>
-                        <h1 className="text-6xl md:text-9xl mb-6">Lojzovy Paseky</h1>
-                        <p className="text-xl md:text-2xl max-w-2xl font-light opacity-80 italic">
-                            Kde se moderní architektura potkává s tichem lesů.<br/>Investice do klidu, který trvá.
-                        </p>
+                        <h1 className="text-6xl md:text-8xl mb-4">{t[lang].title}</h1>
+                        <p className="text-xl opacity-80 italic">{t[lang].sub}</p>
                     </header>
 
-                    {/* SEKCE FOTKY (GALERIE) */}
-                    <section id="galerie" className="bg-black py-24 px-8">
-                        <h2 className="text-4xl text-center mb-16">Nahlédněte do Phoenixu</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                            <div className="h-80 bg-gray-900 rounded-2xl overflow-hidden group">
-                                <img src="https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=800" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            </div>
-                            <div className="h-80 bg-gray-900 rounded-2xl overflow-hidden group">
-                                <img src="https://images.unsplash.com/photo-1449156001931-82992a472000?q=80&w=800" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            </div>
-                            <div className="h-80 bg-gray-900 rounded-2xl overflow-hidden group">
-                                <img src="https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=800" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    {/* KALENDÁŘ PROPOJENÝ S AI */}
+                    <section className="bg-black py-20 px-8">
+                        <div className="max-w-4xl mx-auto glass p-8 rounded-3xl">
+                            <h2 className="text-2xl mb-8 text-center">{t[lang].res}</h2>
+                            <div className="grid grid-cols-7 gap-2">
+                                {[...Array(31)].map((_, i) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => selectDate(i + 1)}
+                                        className="aspect-square flex items-center justify-center rounded-lg border border-white/5 hover:bg-[#22c55e] hover:text-black transition-all"
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </section>
 
-                    {/* CHAT - PŘESNĚ DLE TVÉHO OBRÁZKU */}
+                    {/* CHAT OKNO */}
                     <div className="fixed bottom-8 right-8 z-50">
-                        {!isOpen ? (
-                            <button onClick={() => setIsOpen(true)} className="bg-[#22c55e] text-black p-5 rounded-full shadow-2xl">💬</button>
-                        ) : (
-                            <div className="chat-window w-[360px] h-[520px] shadow-2xl flex flex-col animate-in fade-in slide-in-from-bottom-4">
-                                <div className="bg-[#22c55e] p-6 text-white relative">
-                                    <div className="font-bold text-lg leading-tight text-black">Lojzovy Paseky AI</div>
-                                    <div className="text-[10px] text-black font-semibold opacity-70 uppercase tracking-widest">Online | Připraven pomoci</div>
-                                    <button onClick={() => setIsOpen(false)} className="absolute top-6 right-6 text-black font-bold">✕</button>
+                        {isOpen && (
+                            <div className="chat-window w-[350px] h-[500px] flex flex-col shadow-2xl animate-in slide-in-from-right">
+                                <div className="bg-[#22c55e] p-5 text-black font-bold flex justify-between rounded-t-[2rem]">
+                                    <span>PHOENIX AI</span>
+                                    <button onClick={() => setIsOpen(false)}>✕</button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-5 space-y-4 chat-scroll">
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
                                     {messages.map((m, i) => (
-                                        <div key={i} className={`flex ${m.r === 'u' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.r === 'u' ? 'bg-[#22c55e] text-black font-medium' : 'bg-white/10 text-gray-200'}`}>
+                                        <div key={i} className={m.r === 'u' ? 'text-right' : 'text-left'}>
+                                            <div className={`inline-block p-3 rounded-xl ${m.r === 'u' ? 'bg-[#22c55e] text-black' : 'bg-white/10 text-white'}`}>
                                                 {m.t}
                                             </div>
                                         </div>
                                     ))}
-                                    {loading && <div className="text-[#22c55e] text-[10px] font-bold animate-pulse uppercase tracking-widest">Phoenix odpovídá...</div>}
                                 </div>
-                                <form onSubmit={send} className="p-4 bg-white/5 border-t border-white/10">
-                                    <input 
-                                        value={input} 
-                                        onChange={e => setInput(e.target.value)} 
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#22c55e]" 
-                                        placeholder="Napište nám termín nebo počet osob..." 
-                                    />
-                                </form>
                             </div>
                         )}
                     </div>
                 </div>
             );
         }
-
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
