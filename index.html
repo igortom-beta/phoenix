@@ -37,6 +37,7 @@
                 setInput('');
                 setLoading(true);
                 try {
+                    // Voláme naši API bránu na Vercelu
                     const res = await fetch('/api/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -46,7 +47,7 @@
                     if (data.choices && data.choices[0]) {
                         setMessages(prev => [...prev, { r: 'ai', t: data.choices[0].message.content }]);
                     } else {
-                        throw new Error('Chyba odpovědi');
+                        throw new Error('Chyba');
                     }
                 } catch (e) { 
                     setMessages(prev => [...prev, { r: 'ai', t: 'Omlouvám se, spojení se nepodařilo. Zkuste to prosím za chvilku.' }]);
