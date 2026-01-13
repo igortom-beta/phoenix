@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lojzovy Paseky | Projekt Phoenix</title>
+    <title>Lojzovy Paseky | Váš druhý domov v srdci Šumavy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #05080a; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .hero-gradient { background: radial-gradient(circle at top right, #1a3a5f 0%, #05080a 100%); }
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 10px; }
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: white; }
+        h1, h2 { font-family: 'Playfair Display', serif; }
+        /* Pozadí přesně podle tvého obrázku */
+        .hero-bg {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+                        url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+        }
+        .glass-nav { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(15px); }
+        .chat-header { background: #22c55e; border-radius: 1.5rem 1.5rem 0 0; }
+        .chat-window { background: #1a1a1a; border-radius: 2rem; border: 1px solid rgba(255,255,255,0.1); }
+        .photo-card { transition: transform 0.3s ease; cursor: pointer; }
+        .photo-card:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -24,130 +34,51 @@
         const { useState, useEffect, useRef } = React;
 
         function App() {
-            const [isOpen, setIsOpen] = useState(false);
+            const [isOpen, setIsOpen] = useState(true);
             const [input, setInput] = useState('');
             const [loading, setLoading] = useState(false);
             const [messages, setMessages] = useState([
-                { r: 'ai', t: 'Vítejte v projektu Phoenix. Jsem váš AI asistent pro Lojzovy Paseky. Jak vám mohu pomoci s investicí nebo ubytováním?' }
+                { r: 'ai', t: 'Dobrý den! 👋 Jsem asistent pro Lojzovy Paseky. Jak vám mohu pomoci s vaší rezervací?' }
             ]);
             const scrollRef = useRef(null);
 
-            useEffect(() => {
-                if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-            }, [messages, isOpen]);
+            // Fotky bungalovů
+            const photos = [
+                { url: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800", title: "Exteriér" },
+                { url: "https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=800", title: "Terasa" },
+                { url: "https://images.unsplash.com/photo-1449156001931-82992a472000?w=800", title: "Interiér" }
+            ];
 
-            const suggestions = ["Ceník ubytování", "Výnosnost investice", "Kurz EUR/CZK"];
-
-            const send = async (text) => {
-                const msg = text || input;
-                if (!msg.trim() || loading) return;
-                
-                setMessages(prev => [...prev, { r: 'u', t: msg }]);
-                if (!text) setInput('');
+            const send = async (e) => {
+                if(e) e.preventDefault();
+                if(!input.trim() || loading) return;
+                const userMsg = input;
+                setMessages(prev => [...prev, { r: 'u', t: userMsg }]);
+                setInput('');
                 setLoading(true);
-
                 try {
-                    const res = await fetch('/api/chat', {
-                        method: 'POST',
-                        body: JSON.stringify({ message: msg })
-                    });
+                    const res = await fetch('/api/chat', { method: 'POST', body: JSON.stringify({ message: userMsg }) });
                     const data = await res.json();
                     setMessages(prev => [...prev, { r: 'ai', t: data.text }]);
                 } catch (e) {
-                    setMessages(prev => [...prev, { r: 'ai', t: 'Omlouvám se, spojení s centrem Phoenix bylo přerušeno.' }]);
+                    setMessages(prev => [...prev, { r: 'ai', t: 'Omlouvám se, spojení selhalo.' }]);
                 }
                 setLoading(false);
             };
 
             return (
-                <div className="min-h-screen hero-gradient overflow-hidden">
-                    {/* NAV */}
-                    <nav className="p-6 flex justify-between items-center max-w-6xl mx-auto">
-                        <div className="text-2xl font-bold tracking-tighter text-[#22c55e]">PHOENIX</div>
-                        <div className="hidden md:flex gap-8 text-sm uppercase tracking-widest opacity-60">
-                            <span>Exteriér</span><span>Interiér</span><span>Lokalita</span>
+                <div className="relative">
+                    {/* NAVIGACE */}
+                    <nav className="fixed top-0 w-full glass-nav z-50 px-8 py-5 flex justify-between items-center text-white">
+                        <div className="font-bold text-xl tracking-tighter uppercase">Lojzovy Paseky</div>
+                        <div className="hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest opacity-80">
+                            <a href="#projekt" className="hover:text-[#22c55e]">O projektu</a>
+                            <a href="#apartmany" className="hover:text-[#22c55e]">Apartmány</a>
+                            <a href="#lokalita" className="hover:text-[#22c55e]">Lokalita</a>
+                            <a href="#kontakt" className="hover:text-[#22c55e]">Kontakt</a>
                         </div>
+                        <button className="bg-[#22c55e] px-6 py-2 rounded-full text-[10px] font-bold uppercase text-white hover:bg-[#1da850]">Rezervovat</button>
                     </nav>
 
-                    {/* HERO SECTION */}
-                    <main className="max-w-6xl mx-auto px-6 pt-20 pb-32 flex flex-col items-center text-center">
-                        <div className="inline-block px-4 py-1 border border-[#22c55e]/30 rounded-full text-[#22c55e] text-xs font-bold mb-6 animate-pulse">
-                            INVESTIČNÍ PŘÍLEŽITOST ROKU 2026
-                        </div>
-                        <h1 className="text-6xl md:text-8xl font-bold mb-8 tracking-tighter">
-                            Lojzovy <span className="text-[#22c55e]">Paseky</span>
-                        </h1>
-                        <p className="max-w-2xl text-xl text-gray-400 mb-12 leading-relaxed">
-                            Spojení luxusního šumavského ubytování a moderních technologií. 
-                            Váš druhý domov v náruči přírody u Lipna.
-                        </p>
-                        
-                        <div className="flex gap-4">
-                            <button className="bg-[#22c55e] text-black px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform">
-                                Prozkoumat projekt
-                            </button>
-                            <a href="mailto:info@lojzovypaseky.life" className="glass px-10 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-all">
-                                Kontaktovat
-                            </a>
-                        </div>
-                    </main>
-
-                    {/* CHAT WIDGET */}
-                    <div className="fixed bottom-8 right-8 z-50">
-                        {!isOpen ? (
-                            <button onClick={() => setIsOpen(true)} className="bg-[#22c55e] text-black p-5 rounded-full shadow-[0_0_30px_rgba(34,197,94,0.4)] hover:scale-110 transition-all">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            </button>
-                        ) : (
-                            <div className="bg-[#0d1117] w-[380px] h-[580px] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10 animate-in slide-in-from-bottom-8">
-                                <div className="bg-[#161b22] p-5 border-b border-white/5 flex justify-between items-center text-white">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 bg-[#22c55e] rounded-full animate-pulse" />
-                                        <span className="font-bold tracking-tight">Phoenix Intelligence</span>
-                                    </div>
-                                    <button onClick={() => setIsOpen(false)} className="opacity-50 hover:opacity-100">✕</button>
-                                </div>
-                                
-                                <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 chat-scroll">
-                                    {messages.map((m, i) => (
-                                        <div key={i} className={`flex ${m.r === 'u' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${m.r === 'u' ? 'bg-[#22c55e] text-black font-semibold' : 'bg-[#161b22] text-gray-200 border border-white/5'}`}>
-                                                {m.t}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {messages.length === 1 && (
-                                        <div className="flex flex-wrap gap-2 pt-2">
-                                            {suggestions.map(s => (
-                                                <button key={s} onClick={() => send(s)} className="text-[10px] uppercase tracking-wider border border-white/10 px-3 py-1 rounded-full hover:border-[#22c55e] hover:text-[#22c55e] transition-all">
-                                                    {s}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {loading && <div className="text-[#22c55e] text-[10px] uppercase tracking-[0.2em] font-bold animate-pulse">Phoenix analyzuje dotaz...</div>}
-                                </div>
-
-                                <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-5 bg-[#0d1117] border-t border-white/5 flex gap-2">
-                                    <input 
-                                        value={input} 
-                                        onChange={e => setInput(e.target.value)} 
-                                        className="flex-1 bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#22c55e]/50 transition-all" 
-                                        placeholder="Napište zprávu..." 
-                                    />
-                                    <button className="bg-[#22c55e] text-black p-3 rounded-xl font-bold hover:bg-[#1da850]">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                                    </button>
-                                </form>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                    {/* HERO SEKCE (PŘESNĚ PODLE OBRÁZKU) */}
+                    <header className="hero-
