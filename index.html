@@ -32,16 +32,23 @@
 
             const askAI = async () => {
                 if(!input || loading) return;
-                const uMsg = { r: 'u', t: input };
-                setMessages(prev => [...prev, uMsg]);
+                const userText = input;
+                const uMsg = { r: 'u', t: userText };
+                const newMessages = [...messages, uMsg];
+                setMessages(newMessages);
                 setInput('');
                 setLoading(true);
                 try {
-                    // Voláme naši API bránu na Vercelu
+                    // Formátování historie pro OpenAI API
+                    const apiMessages = newMessages.map(m => ({
+                        role: m.r === 'u' ? 'user' : 'assistant',
+                        content: m.t
+                    }));
+
                     const res = await fetch('/api/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ messages: [{ role: 'user', content: input }] })
+                        body: JSON.stringify({ messages: apiMessages })
                     });
                     const data = await res.json();
                     if (data.choices && data.choices[0]) {
@@ -134,4 +141,3 @@
     </script>
 </body>
 </html>
- 
