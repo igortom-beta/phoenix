@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lojzovy Paseky - Phoenix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#f4f7f6]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const [isOpen, setIsOpen] = useState(false);
+            const [messages, setMessages] = useState([{ role: 'ai', text: 'Dobrý den! 👋 Jsem asistent Phoenix. Jak vám mohu pomoci s ubytováním v Lojzových Pasekách?' }]);
+            const [input, setInput] = useState('');
+
+            const send = (e) => {
+                e.preventDefault();
+                if (!input.trim()) return;
+                setMessages([...messages, { role: 'user', text: input }, { role: 'ai', text: 'Děkuji! Právě ladíme propojení na OpenAI. Pro rezervaci nám zatím prosím napište na info@lojzovypaseky.life.' }]);
+                setInput('');
+            };
+
+            return (
+                <div className="min-h-screen font-sans">
+                    {/* HORNÍ MODRÁ ČÁST */}
+                    <header className="bg-[#1a3a5f] text-white py-20 text-center shadow-lg">
+                        <h1 className="text-5xl font-bold mb-4">Lojzovy Paseky</h1>
+                        <p className="text-xl opacity-80 italic">Projekt Phoenix - Váš nový začátek u Lipna</p>
+                    </header>
+
+                    {/* BÍLÁ KARTA S TEXTEM */}
+                    <main className="max-w-4xl mx-auto -mt-12 p-10 bg-white rounded-2xl shadow-2xl text-center border border-gray-100">
+                        <h2 className="text-3xl font-bold mb-6 text-[#1a3a5f]">Rezervace ubytování</h2>
+                        <p className="text-gray-600 mb-10 text-lg leading-relaxed">
+                            Vítejte v Lojzových Pasekách. Naše bungalovy nabízí moderní komfort v srdci Šumavy. 
+                            Využijte našeho asistenta vpravo dole pro rychlé dotazy.
+                        </p>
+                        <a href="mailto:info@lojzovypaseky.life" className="inline-block bg-[#28a745] text-white px-10 py-5 rounded-xl font-bold text-xl shadow-xl hover:bg-[#218838] transition-all">
+                            REZERVOVAT TEĎ
+                        </a>
+                    </main>
+
+                    {/* CHAT WIDGET */}
+                    <div className="fixed bottom-8 right-8 z-50">
+                        {!isOpen ? (
+                            <button onClick={() => setIsOpen(true)} className="bg-[#22c55e] text-white p-5 rounded-full shadow-2xl text-3xl hover:scale-110 transition-transform">💬</button>
+                        ) : (
+                            <div className="bg-[#0a0f16] w-[350px] h-[500px] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-white/10">
+                                <div className="bg-[#22c55e] p-5 flex justify-between items-center text-white font-bold">
+                                    <span>Phoenix AI</span>
+                                    <button onClick={() => setIsOpen(false)}>✕</button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#0a0f16]">
+                                    {messages.map((m, i) => (
+                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${m.role === 'user' ? 'bg-[#22c55e] text-white' : 'bg-gray-800 text-gray-100'}`}>
+                                                {m.text}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <form onSubmit={send} className="p-4 bg-black/40 border-t border-white/5 flex gap-2">
+                                    <input value={input} onChange={e => setInput(e.target.value)} placeholder="Zeptejte se..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none" />
+                                    <button className="bg-[#22c55e] text-white px-4 py-2 rounded-xl font-bold">OK</button>
+                                </form>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
