@@ -3,113 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lojzovy Paseky | Medical & Family Resort</title>
+    <title>Phoenix | Private Residences</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #000; color: white; scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: white; scroll-behavior: smooth; overflow-x: hidden; }
         h1, h2 { font-family: 'Playfair Display', serif; }
-        .hero-bg {
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                        url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover; background-position: center; min-height: 100vh;
-        }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .chat-window { background: #0a0a0a; border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 2rem; }
+        .hero-bg { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; min-height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .chat-window { background: #080808; border-radius: 2rem; border: 1px solid rgba(34, 197, 94, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .mic-pulse { animation: pulse 1.5s infinite; color: #ef4444; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-
         function App() {
-            const [lang, setLang] = useState('CZ');
             const [isOpen, setIsOpen] = useState(true);
-            const [messages, setMessages] = useState([
-                { r: 'ai', t: 'Vítejte, pane doktore. Jsem Phoenix. Připravil jsem pro vás přehled termínů. Jak vám mohu pomoci?' }
-            ]);
+            const [isListening, setIsListening] = useState(false);
+            const [input, setInput] = useState('');
+            const [messages, setMessages] = useState([{ r: 'ai', t: 'Vítejte. Jsem Phoenix. Hledáte diskrétní dlouhodobý pronájem v jedné z našich šesti rezidencí? Můžete na mě i mluvit.' }]);
 
-            const t = {
-                CZ: { title: "Lojzovy Paseky", sub: "Váš druhý domov u Lipna", res: "Rezervace", gal: "Galerie" },
-                EN: { title: "Lojzovy Paseky", sub: "Your second home at Lipno", res: "Booking", gal: "Gallery" },
-                DE: { title: "Lojzovy Paseky", sub: "Ihr zweites Zuhause am Lipno", res: "Buchung", gal: "Galerie" }
+            const toggleMic = () => {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) return alert("Váš prohlížeč nepodporuje hlas.");
+                const rec = new SpeechRecognition();
+                rec.lang = 'cs-CZ';
+                rec.onstart = () => setIsListening(true);
+                rec.onresult = (e) => { setInput(e.results[0][0].transcript); setIsListening(false); };
+                rec.onerror = () => setIsListening(false);
+                rec.start();
             };
 
-            const selectDate = (day) => {
-                setIsOpen(true);
-                const responses = {
-                    CZ: `Termín ${day}. vypadá skvěle. Mám prověřit dostupnost bungalovu?`,
-                    EN: `Date ${day} looks great. Shall I check bungalow availability?`,
-                    DE: `Der ${day}. sieht gut aus. Soll ich die Verfügbarkeit prüfen?`
-                };
-                setMessages(prev => [...prev, { r: 'u', t: `Mám zájem o ${day}.` }, { r: 'ai', t: responses[lang] }]);
+            const send = async (e) => {
+                if(e) e.preventDefault();
+                const msg = input; if(!msg) return;
+                setMessages(prev => [...prev, { r: 'u', t: msg }]); setInput('');
+                try {
+                    const res = await fetch('/api/chat', { method: 'POST', body: JSON.stringify({ message: msg }) });
+                    const data = await res.json();
+                    setMessages(prev => [...prev, { r: 'ai', t: data.text }]);
+                    if ('speechSynthesis' in window) {
+                        const ut = new SpeechSynthesisUtterance(data.text);
+                        ut.lang = 'cs-CZ'; window.speechSynthesis.speak(ut);
+                    }
+                } catch (e) { console.error(e); }
             };
 
             return (
-                <div className="relative">
-                    {/* JAZYKOVÝ PŘEPÍNAČ */}
-                    <nav className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center glass">
-                        <div className="font-bold text-xl tracking-tighter uppercase text-[#22c55e]">Phoenix Resort</div>
-                        <div className="flex gap-4 text-[10px] font-bold">
-                            {['CZ', 'EN', 'DE'].map(l => (
-                                <button key={l} onClick={() => setLang(l)} className={`px-2 py-1 ${lang === l ? 'text-[#22c55e]' : 'opacity-50'}`}>{l}</button>
-                            ))}
+                <div className="relative min-h-screen">
+                    <nav className="fixed top-0 w-full z-50 px-10 py-8 flex justify-between items-center glass">
+                        <div className="font-bold text-xl tracking-[0.3em] uppercase text-[#22c55e]">Phoenix</div>
+                        <div className="hidden md:flex gap-8 text-[10px] font-bold uppercase opacity-50">
+                            <span>Private</span><span>Long-term</span><span>Discreet</span>
                         </div>
                     </nav>
-
                     <header className="hero-bg flex flex-col items-center justify-center text-center px-4">
-                        <h1 className="text-6xl md:text-8xl mb-4">{t[lang].title}</h1>
-                        <p className="text-xl opacity-80 italic">{t[lang].sub}</p>
+                        <h1 className="text-7xl md:text-[9rem] mb-6 font-bold tracking-tighter leading-none">Phoenix</h1>
+                        <p className="text-xl md:text-2xl font-light opacity-60 italic tracking-wide">Šest rezidencí. Jeden břeh. Absolutní klid.</p>
                     </header>
-
-                    {/* KALENDÁŘ PROPOJENÝ S AI */}
-                    <section className="bg-black py-20 px-8">
-                        <div className="max-w-4xl mx-auto glass p-8 rounded-3xl">
-                            <h2 className="text-2xl mb-8 text-center">{t[lang].res}</h2>
-                            <div className="grid grid-cols-7 gap-2">
-                                {[...Array(31)].map((_, i) => (
-                                    <button 
-                                        key={i} 
-                                        onClick={() => selectDate(i + 1)}
-                                        className="aspect-square flex items-center justify-center rounded-lg border border-white/5 hover:bg-[#22c55e] hover:text-black transition-all"
-                                    >
-                                        {i + 1}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* CHAT OKNO */}
-                    <div className="fixed bottom-8 right-8 z-50">
+                    <div className="fixed bottom-10 right-10 z-50">
                         {isOpen && (
-                            <div className="chat-window w-[350px] h-[500px] flex flex-col shadow-2xl animate-in slide-in-from-right">
-                                <div className="bg-[#22c55e] p-5 text-black font-bold flex justify-between rounded-t-[2rem]">
-                                    <span>PHOENIX AI</span>
-                                    <button onClick={() => setIsOpen(false)}>✕</button>
+                            <div className="chat-window w-[350px] h-[550px] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10">
+                                <div className="p-6 bg-[#22c55e]/10 border-b border-[#22c55e]/20 flex justify-between items-center">
+                                    <span className="font-bold text-xs uppercase tracking-widest text-[#22c55e]">Phoenix Intelligence</span>
+                                    <button onClick={() => setIsOpen(false)} className="text-white/30 hover:text-white font-bold">✕</button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+                                <div className="flex-1 overflow-y-auto p-6 space-y-4 text-xs italic">
                                     {messages.map((m, i) => (
                                         <div key={i} className={m.r === 'u' ? 'text-right' : 'text-left'}>
-                                            <div className={`inline-block p-3 rounded-xl ${m.r === 'u' ? 'bg-[#22c55e] text-black' : 'bg-white/10 text-white'}`}>
-                                                {m.t}
-                                            </div>
+                                            <div className={`inline-block p-4 rounded-2xl ${m.r === 'u' ? 'bg-[#22c55e] text-black font-bold' : 'bg-white/5 border border-white/10 text-gray-300'}`}>{m.t}</div>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                                <form onSubmit={send} className="p-6 bg-black/40 border-t border-white/5 flex gap-3 items-center">
+                                    <button type="button" onClick={toggleMic} className={isListening ? 'mic-pulse' : 'text-white/40 hover:text-[#22c55e]'}>
+                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1
